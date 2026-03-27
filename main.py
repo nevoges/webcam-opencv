@@ -1,42 +1,29 @@
+
+
 import cv2
-import sys
 
-def main():
-    cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)  # CAP_DSHOW = faster init on Windows
+face_cascade = cv2.CascadeClassifier(
+    cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+)
 
-    if not cap.isOpened():
-        print("Error: Could not open webcam. Check that it's connected and not in use.")
-        sys.exit(1)
+cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
 
-    print("Webcam started. Press ESC to exit.")
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    consecutive_failures = 0
-    MAX_FAILURES = 10
+    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
 
-    while True:
-        ret, frame = cap.read()
+    for (x, y, w, h) in faces:
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
-        if not ret:
-            consecutive_failures += 1
-            print(f"Warning: Failed to grab frame ({consecutive_failures}/{MAX_FAILURES})")
-            if consecutive_failures >= MAX_FAILURES:
-                print("Error: Too many consecutive frame failures. Exiting.")
-                break
-            continue
+    cv2.imshow("Face Detection", frame)
 
-        consecutive_failures = 0  # reset on success
+    if cv2.waitKey(1) & 0xFF == 27:
+        break
 
-        cv2.imshow("Webcam — ESC to exit", frame)
-
-        if cv2.waitKey(1) & 0xFF == 27:  # 27 = ESC
-            print("ESC pressed. Exiting.")
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-if __name__ == "__main__":
-    main()
+cap.release()
+cv2.destroyAllWindows()
